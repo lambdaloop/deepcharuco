@@ -1,7 +1,7 @@
 import random
 import json
 import os
-
+import torch
 import cv2
 import numpy as np
 
@@ -78,8 +78,9 @@ class CharucoDataset(Dataset):
             w = MagicGrid(640, 640, waitKey=0)
             from aruco_utils import draw_inner_corners, draw_circle_pred
             img = image.copy()
-            img = draw_inner_corners(img, keypoints, kpts_ids, draw_ids=True, radius=3)
-            img = draw_circle_pred(img, loc, ids, dust_bin_ids, draw_ids=True)
+            img = draw_inner_corners(img, keypoints, kpts_ids, draw_ids=False, radius=3)
+            img = draw_circle_pred(img, torch.asarray(loc), torch.asarray(ids),
+                                   dust_bin_ids, draw_ids=False)
 
             if w.update([img]) == ord('q'):
                 import sys
