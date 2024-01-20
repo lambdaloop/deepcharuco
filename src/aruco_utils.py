@@ -75,14 +75,22 @@ def board_image(board, resolution: tuple[int, int],
     object, which is converted to color format using `cv2.cvtColor` with the
     `cv2.COLOR_GRAY2BGR` flag.
     """
-    img = cv2.cvtColor(board.draw(outSize=resolution), cv2.COLOR_GRAY2BGR)
-    pixel_offset = np.array([resolution[0] / col_count, resolution[1] / row_count])
+
+    ratio = min(resolution) // max(col_count, row_count)
+    resolution_big = (ratio * col_count * 10, ratio * row_count * 10)
+    resolution_low = (ratio * col_count, ratio * row_count)
+
+    img = cv2.cvtColor(board.draw(outSize=resolution_big), cv2.COLOR_GRAY2BGR)
+    # pixel_offset = np.array([resolution[0] / col_count, resolution[1] / row_count])
+    pixel_offset = ratio
+
+    img_resize = cv2.resize(img, resolution_low, interpolation=cv2.INTER_NEAREST_EXACT)
 
     # row_id, col_id, (x, y) pixel coords
     inn_rc = np.arange(1, row_count)
     inn_cc = np.arange(1, col_count)
-    corners = np.array(np.meshgrid(inn_rc, inn_cc)).reshape((2, -1)).T * pixel_offset
-    return img, corners.astype(int)
+    corners = np.array(np.meshgrid(inn_cc, inn_rc)).reshape((2, -1)).T * pixel_offset - 0.5
+    return img_resize, corners
 
 
 def draw_inner_corners(img: np.ndarray, corners: np.ndarray, ids: np.ndarray,
@@ -199,6 +207,7 @@ def draw_circle_pred(img: np.ndarray, loc: np.ndarray, ids: np.ndarray,
     font = cv2.FONT_HERSHEY_SIMPLEX
     text_thickness = 1
     for corner, ith in zip(kpts, ids):
+        corner = corner.numpy()
         cv2.circle(img, corner, radius=radius, color=color,
                    thickness=text_thickness)
 
